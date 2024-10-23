@@ -28,7 +28,7 @@ public class Starter {
         PrintWriter writer = new PrintWriter(process.getOutputStream(), true); // Автоматическая очистка буфера
 
         writer.println("1");
-        writer.println("4 1");
+        writer.println("0 6");
         writer.flush();
         while (true) {
             String[] line1 = reader.readLine().split(" ");
@@ -36,6 +36,7 @@ public class Starter {
                 System.out.println(line1[1]);
                 break;
             } else if (!line1[0].equals("m")) {
+                System.out.println(String.join(" ", line1));
                 System.out.println("Error");
                 break;
             }
@@ -43,7 +44,7 @@ public class Starter {
             List<String> neighbors = new ArrayList<>();
             int x = Integer.parseInt(line1[1]);
             int y = Integer.parseInt(line1[2]);
-
+//            System.out.println(x + " " + y);
 
             for (maze.solver.Pair neighborDirection : Pair.directionsVisibility()) {
                 int neighborX = x + neighborDirection.x;
@@ -53,14 +54,15 @@ public class Starter {
                     String type = maze.get(neighborY).get(neighborX);
                     if (!type.equals(".") && !type.equals("N")) {
                         neighbors.add(neighborX + " " + neighborY + " " + type);
-                        System.out.println(neighborX + " " + neighborY + " " + type);
                     }
 
                 }
             }
             writer.println(neighbors.size());
+            System.out.println(neighbors.size());
             if (!neighbors.isEmpty()) {
                 writer.println(String.join("\n", neighbors));
+                System.out.println(String.join("\n", neighbors));
             }
         }
     }

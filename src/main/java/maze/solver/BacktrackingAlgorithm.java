@@ -2,13 +2,15 @@ package maze.solver;
 
 import java.util.*;
 
-public class AStarAlgorithm {
+public class BacktrackingAlgorithm {
     private Maze maze;
     Node neo;
     Node end;
     Scanner scanner;
+    int best = Integer.MAX_VALUE;
+    List<Pair> visited = new ArrayList<>();
 
-    public AStarAlgorithm() {
+    public BacktrackingAlgorithm() {
         maze = new Maze(9, 9);
         scanner = new Scanner(System.in);
         scanner.nextLine();
@@ -17,45 +19,57 @@ public class AStarAlgorithm {
     }
 
     public void execute() {
-        PointModified endPoint = new PointModified(end.getCoordinates());
-        PointModified prevPosition = null;
-        Queue<PointModified> queue = new PriorityQueue<>(
-                Comparator.comparingInt((PointModified o) -> o.weight)
-                        .thenComparingInt(o -> o.directDistance));
-        PointModified bestEnd = new PointModified(0, 0)
-                .setDistance(Integer.MAX_VALUE / 2, Integer.MAX_VALUE / 2);
-
-        queue.add(new PointModified(neo.getX(), neo.getY()).setDistance(directPath(neo.getCoordinates(), end.getCoordinates()), 0));
-
-        while (!queue.isEmpty()) {
-            PointModified current = queue.poll();
-            if (prevPosition != null && !current.prev.equals(prevPosition)) {
-                goTo(current, prevPosition);
-            }
-            step(Pair.of(current.coordinates.x, current.coordinates.y));
-
-            for (Pair direction: Pair.directions()) {
-                Pair to = Pair.of(current.coordinates.x + direction.x, current.coordinates.y + direction.y);
-
-                if (isValidDestination(to, maze.width, maze.height)
-                        && !neo.isDanger(direction)
-                        && (current.prev == null || !isVisited(current, to))) {
-                    if (to.equals(endPoint.coordinates)) {
-                        System.out.println("e " + (current.passedDistance + 1));
-                        return;
-                    }
-                    queue.add(
-                            current
-                                    .createNext(to)
-                                    .setDistance(
-                                            directPath(to, endPoint.coordinates),
-                                            current.passedDistance + 1
-                                    ));
-                }
-            }
-            prevPosition = current;
+        searchTreeBacktracking(new PointModified(neo.getCoordinates()).setDistance(directPath(neo.getCoordinates(), end.getCoordinates()), 0));
+        if (best != Integer.MAX_VALUE) {
+            System.out.println("e " + best);
+        } else {
+            System.out.println("e -1");
         }
-        System.out.println("e -1");
+    }
+
+    private boolean searchTreeBacktracking(PointModified current) {
+        if (current.coordinates.equals(end.getCoordinates())) {
+            if (current.passedDistance < best) {
+                best = current.weight;
+            }
+            return true;
+        }
+
+        step(current.coordinates);
+        Node neoInner = neo;
+
+        int counter = 0;
+        for (Pair direction: Pair.directions()) {
+            Pair to = Pair.of(current.coordinates.x + direction.x, current.coordinates.y + direction.y);
+            if (!isValidDestination(to, maze.width, maze.height)) {
+                continue;
+            }
+            if (visited.contains(to) || isVisited(current, to)) {
+                continue;
+            }
+            if (neoInner.isDanger(direction)) {
+                continue;
+            }
+            if (current.passedDistance + 1 > maze.height* maze.width) {
+                continue;
+            }
+            counter++;
+            searchTreeBacktracking(
+                current.createNext(to)
+                        .setDistance(
+                                directPath(to, end.getCoordinates()),
+                                current.passedDistance + 1)
+            );
+            step(current.coordinates);
+        }
+        if (counter == 0) {
+            visited.add(current.coordinates);
+        }
+        return false;
+    }
+
+    private boolean isValidDestination(Pair to, int width, int height) {
+        return to.x >= 0 && to.y >= 0 && to.x < width && to.y < height;
     }
 
     private boolean isVisited(PointModified current, Pair to) {
@@ -72,27 +86,9 @@ public class AStarAlgorithm {
         }
     }
 
-    private void goTo(PointModified current, PointModified prev) {
-        PointModified currentPosition = current;
-        PointModified prevPosition = prev;
-        List<PointModified> path = new ArrayList<>();
-        while (prevPosition.prev != null) {
-            path.add(prevPosition.prev);
-            prevPosition = prevPosition.prev;
-        }
-        path.forEach(a -> step(a.coordinates));
-
-        path = new ArrayList<>();
-        while (currentPosition.prev != null) {
-            path.add(currentPosition.prev);
-            currentPosition = currentPosition.prev;
-        }
-        Collections.reverse(path);
-        path.stream().skip(1).forEach(a -> step(a.coordinates));
-    }
-
-    private boolean isValidDestination(Pair to, int width, int height) {
-        return to.x >= 0 && to.y >= 0 && to.x < width && to.y < height;
+    private void findEnd() {
+        String[] params = scanner.nextLine().split(" ");
+        end = maze.createNode(Integer.parseInt(params[0]), Integer.parseInt(params[1]), NodeType.END);
     }
 
     private int directPath(Pair start, Pair end) {
@@ -120,12 +116,6 @@ public class AStarAlgorithm {
     }
 
 
-
-    private void findEnd() {
-        String[] params = scanner.nextLine().split(" ");
-        end = maze.createNode(Integer.parseInt(params[0]), Integer.parseInt(params[1]), NodeType.END);
-    }
-
     private void step(Pair coordinates) {
         System.out.println("m " + coordinates.x + " " + coordinates.y);
 
@@ -140,7 +130,7 @@ public class AStarAlgorithm {
                 maze.createNode(x, y, NodeType.of(params[2]));
             }
         }
-            neo = maze.createNode(coordinates.x, coordinates.y, NodeType.AGENT);
+        neo = maze.createNode(coordinates.x, coordinates.y, NodeType.NEO);
     }
 
     static class PointModified {
@@ -174,12 +164,15 @@ public class AStarAlgorithm {
 
         @Override
         public boolean equals(Object o) {
-            return super.equals(o);
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PointModified that = (PointModified) o;
+            return Objects.equals(coordinates, that.coordinates);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(coordinates, weight);
+            return Objects.hashCode(coordinates);
         }
     }
 }

@@ -1,7 +1,7 @@
 package maze.solver;
 
 public enum NodeType {
-    START,
+    NEO,
     DANGER,
     AGENT,
     Sentinel,

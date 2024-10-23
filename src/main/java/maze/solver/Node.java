@@ -39,7 +39,8 @@ public class Node {
     public boolean isDanger(Pair coordinates) {
         return neighbors.get(coordinates) != null
                 && neighbors.get(coordinates).nodeType != NodeType.END
-                && neighbors.get(coordinates).nodeType != NodeType.KEY;
+                && neighbors.get(coordinates).nodeType != NodeType.KEY
+                && neighbors.get(coordinates).nodeType != NodeType.NEO;
     }
 
     public int getX() {
@@ -53,4 +54,5 @@ public class Node {
     public NodeType getNodeType() {
         return nodeType;
     }
+
 }

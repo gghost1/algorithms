@@ -1,86 +1,83 @@
+package org.example;
+
 import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
-        AStarAlgorithm aStarAlgorithm = new AStarAlgorithm();
-        aStarAlgorithm.execute();
+        BacktrackingAlgorithm backtrackingAlgorithm = new BacktrackingAlgorithm();
+        backtrackingAlgorithm.execute();
     }
 }
 
-class AStarAlgorithm {
+
+class BacktrackingAlgorithm {
     private Maze maze;
     Node neo;
     Node end;
     Scanner scanner;
+    int best = Integer.MAX_VALUE;
+    List<Pair> visited = new ArrayList<>();
 
-    public AStarAlgorithm() {
+    public BacktrackingAlgorithm() {
         maze = new Maze(9, 9);
         scanner = new Scanner(System.in);
         scanner.nextLine();
-        neo = maze.createNode(0, 0, NodeType.START);
+        neo = maze.createNode(0, 0, NodeType.NEO);
         findEnd();
     }
 
     public void execute() {
-        PointModified endPoint = new PointModified(end.getCoordinates());
-        PointModified prevPosition = null;
-
-        Queue<PointModified> queue = new PriorityQueue<>(
-                Comparator.comparingInt((PointModified o) -> o.weight)
-                        .thenComparingInt(o -> o.directDistance));
-        PointModified bestEnd = new PointModified(0, 0)
-                .setDistance(Integer.MAX_VALUE / 2, Integer.MAX_VALUE / 2);
-
-        queue.add(new PointModified(neo.getX(), neo.getY()).setDistance(directPath(neo.getCoordinates(), end.getCoordinates()), 0));
-
-        while (!queue.isEmpty()) {
-            PointModified current = queue.poll();
-            if (prevPosition != null && !current.prev.equals(prevPosition)) {
-                goTo(current, prevPosition);
-            }
-            step(Pair.of(current.coordinates.x, current.coordinates.y));
-
-            for (Pair direction: Pair.directions()) {
-                Pair to = Pair.of(current.coordinates.x + direction.x, current.coordinates.y + direction.y);
-
-                if (isValidDestination(to, maze.width, maze.height)
-                        && !neo.isDanger(direction)
-                        && (current.prev == null || !isVisited(current, to))) {
-                    if (to.equals(endPoint.coordinates)) {
-                        System.out.println("e " + (current.passedDistance + 1));
-                        return;
-                    }
-                    queue.add(
-                            current
-                                    .createNext(to)
-                                    .setDistance(
-                                            directPath(to, endPoint.coordinates),
-                                            current.passedDistance + 1
-                                    ));
-                }
-            }
-            prevPosition = current;
+        searchTreeBacktracking(new PointModified(neo.getCoordinates()).setDistance(directPath(neo.getCoordinates(), end.getCoordinates()), 0));
+        if (best != Integer.MAX_VALUE) {
+            System.out.println("e " + best);
+        } else {
+            System.out.println("e -1");
         }
-        System.out.println("e -1");
     }
 
-    private void goTo(PointModified current, PointModified prev) {
-        PointModified currentPosition = current;
-        PointModified prevPosition = prev;
-        List<PointModified> path = new ArrayList<>();
-        while (prevPosition.prev != null) {
-            path.add(prevPosition.prev);
-            prevPosition = prevPosition.prev;
+    private boolean searchTreeBacktracking(PointModified current) {
+        if (current.coordinates.equals(end.getCoordinates())) {
+            if (current.passedDistance < best) {
+                best = current.weight;
+            }
+            return true;
         }
-        path.forEach(a -> step(a.coordinates));
 
-        path = new ArrayList<>();
-        while (currentPosition.prev != null) {
-            path.add(currentPosition.prev);
-            currentPosition = currentPosition.prev;
+        step(current.coordinates);
+        Node neoInner = neo;
+
+        int counter = 0;
+        for (Pair direction: Pair.directions()) {
+            Pair to = Pair.of(current.coordinates.x + direction.x, current.coordinates.y + direction.y);
+            if (!isValidDestination(to, maze.width, maze.height)) {
+                continue;
+            }
+            if (visited.contains(to) || isVisited(current, to)) {
+                continue;
+            }
+            if (neoInner.isDanger(direction)) {
+                continue;
+            }
+            if (current.passedDistance + 1 > maze.height* maze.width) {
+                continue;
+            }
+            counter++;
+            searchTreeBacktracking(
+                    current.createNext(to)
+                            .setDistance(
+                                    directPath(to, end.getCoordinates()),
+                                    current.passedDistance + 1)
+            );
+            step(current.coordinates);
         }
-        Collections.reverse(path);
-        path.stream().skip(1).forEach(a -> step(a.coordinates));
+        if (counter == 0) {
+            visited.add(current.coordinates);
+        }
+        return false;
+    }
+
+    private boolean isValidDestination(Pair to, int width, int height) {
+        return to.x >= 0 && to.y >= 0 && to.x < width && to.y < height;
     }
 
     private boolean isVisited(PointModified current, Pair to) {
@@ -97,8 +94,9 @@ class AStarAlgorithm {
         }
     }
 
-    private boolean isValidDestination(Pair to, int width, int height) {
-        return to.x >= 0 && to.y >= 0 && to.x < width && to.y < height;
+    private void findEnd() {
+        String[] params = scanner.nextLine().split(" ");
+        end = maze.createNode(Integer.parseInt(params[0]), Integer.parseInt(params[1]), NodeType.END);
     }
 
     private int directPath(Pair start, Pair end) {
@@ -125,10 +123,6 @@ class AStarAlgorithm {
         return counter;
     }
 
-    private void findEnd() {
-        String[] params = scanner.nextLine().split(" ");
-        end = maze.createNode(Integer.parseInt(params[0]), Integer.parseInt(params[1]), NodeType.END);
-    }
 
     private void step(Pair coordinates) {
         System.out.println("m " + coordinates.x + " " + coordinates.y);
@@ -141,11 +135,10 @@ class AStarAlgorithm {
             int y = Integer.parseInt(params[1]);
             NodeType nodeType = NodeType.of(params[2]);
             if (nodeType != NodeType.KEY) {
-                maze.createNode(x, y, nodeType);
+                maze.createNode(x, y, NodeType.of(params[2]));
             }
         }
-        neo = maze.createNode(coordinates.x, coordinates.y, NodeType.AGENT);
-
+        neo = maze.createNode(coordinates.x, coordinates.y, NodeType.NEO);
     }
 
     static class PointModified {
@@ -179,118 +172,15 @@ class AStarAlgorithm {
 
         @Override
         public boolean equals(Object o) {
-            return super.equals(o);
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            PointModified that = (PointModified) o;
+            return Objects.equals(coordinates, that.coordinates);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(coordinates, weight);
-        }
-
-    }
-}
-
-class Maze {
-    private final List<List<Node>> maze;
-    public final int width;
-    public final int height;
-
-    public Maze(int width, int height) {
-        this.width = width;
-        this.height = height;
-        List<List<Node>> maze = new ArrayList<>(height);
-        for (int i = 0; i < height; i++) {
-            List<Node> row = new ArrayList<>(width);
-            for (int j = 0; j < width; j++) {
-                row.add(null);
-            }
-            maze.add(row);
-        }
-        this.maze = maze;
-    }
-
-    public Node getNode(int x, int y) {
-        return maze.get(y).get(x);
-    }
-
-    public Node createNode(int x, int y, NodeType type) {
-        Node node = new Node(x, y, type, maze);
-        maze.get(y).set(x, node);
-        return node;
-    }
-
-}
-
-class Node {
-    private final int x;
-    private final int y;
-
-    private final NodeType nodeType;
-    private final HashMap<Pair, Node> neighbors;
-
-    public Node(int x, int y, NodeType nodeType, List<List<Node>> maze) {
-        this.x = x;
-        this.y = y;
-        this.nodeType = nodeType;
-        this.neighbors = getNeighbors(maze);
-    }
-
-    public Pair getCoordinates() {
-        return Pair.of(x, y);
-    }
-
-    private HashMap<Pair, Node> getNeighbors(List<List<Node>> maze) {
-        List<Pair> neighborDirections = Pair.directionsVisibility();
-        HashMap<Pair, Node> neighborsCreation = new HashMap<>();
-
-        for (Pair neighborDirection : neighborDirections) {
-            int neighborX = x + neighborDirection.x;
-            int neighborY = y + neighborDirection.y;
-
-            if (!(neighborX < 0 || neighborX >= maze.getFirst().size() || neighborY < 0 || neighborY >= maze.size())) {
-                neighborsCreation.put(neighborDirection, maze.get(neighborY).get(neighborX));
-            }
-        }
-        return neighborsCreation;
-    }
-
-    public boolean isDanger(Pair coordinates) {
-        return neighbors.get(coordinates) != null && neighbors.get(coordinates).nodeType != NodeType.END && neighbors.get(coordinates).nodeType != NodeType.KEY;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-}
-
-
-enum NodeType {
-    START,
-    DANGER,
-    AGENT,
-    Sentinel,
-    KEY,
-    END;
-
-    public static NodeType of(String value) {
-        switch (value) {
-            case "P":
-                return NodeType.DANGER;
-            case "A":
-                return NodeType.AGENT;
-            case "S":
-                return NodeType.Sentinel;
-            case "B":
-                return NodeType.KEY;
-            case "K":
-                return NodeType.END;
-            default:
-                return null;
+            return Objects.hashCode(coordinates);
         }
     }
 }
@@ -344,3 +234,115 @@ class Pair {
         return Objects.hash(x, y);
     }
 }
+
+enum NodeType {
+    NEO,
+    DANGER,
+    AGENT,
+    Sentinel,
+    KEY,
+    END;
+
+    public static NodeType of(String value) {
+        switch (value) {
+            case "P":
+                return NodeType.DANGER;
+            case "A":
+                return NodeType.AGENT;
+            case "S":
+                return NodeType.Sentinel;
+            case "B":
+                return NodeType.KEY;
+            case "K":
+                return NodeType.END;
+            default:
+                return null;
+        }
+    }
+}
+
+class Node {
+    private final int x;
+    private final int y;
+
+    private final NodeType nodeType;
+    private final HashMap<Pair, Node> neighbors;
+
+    public Node(int x, int y, NodeType nodeType, List<List<Node>> maze) {
+        this.x = x;
+        this.y = y;
+        this.nodeType = nodeType;
+        this.neighbors = getNeighbors(maze);
+    }
+
+    public Pair getCoordinates() {
+        return Pair.of(x, y);
+    }
+
+    private HashMap<Pair, Node> getNeighbors(List<List<Node>> maze) {
+        List<Pair> neighborDirections = Pair.directionsVisibility();
+        HashMap<Pair, Node> neighborsCreation = new HashMap<>();
+
+        for (Pair neighborDirection : neighborDirections) {
+            int neighborX = x + neighborDirection.x;
+            int neighborY = y + neighborDirection.y;
+
+            if (!(neighborX < 0 || neighborX >= maze.getFirst().size() || neighborY < 0 || neighborY >= maze.size())) {
+                neighborsCreation.put(neighborDirection, maze.get(neighborY).get(neighborX));
+            }
+        }
+        return neighborsCreation;
+    }
+
+    public boolean isDanger(Pair coordinates) {
+        return neighbors.get(coordinates) != null
+                && neighbors.get(coordinates).nodeType != NodeType.END
+                && neighbors.get(coordinates).nodeType != NodeType.KEY
+                && neighbors.get(coordinates).nodeType != NodeType.NEO;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public NodeType getNodeType() {
+        return nodeType;
+    }
+
+}
+
+class Maze {
+    private final List<List<Node>> maze;
+    public final int width;
+    public final int height;
+
+    public Maze(int width, int height) {
+        this.width = width;
+        this.height = height;
+        List<List<Node>> maze = new ArrayList<>(height);
+        for (int i = 0; i < height; i++) {
+            List<Node> row = new ArrayList<>(width);
+            for (int j = 0; j < width; j++) {
+                row.add(null);
+            }
+            maze.add(row);
+        }
+        this.maze = maze;
+    }
+
+    public Node getNode(int x, int y) {
+        return maze.get(y).get(x);
+    }
+
+    public Node createNode(int x, int y, NodeType type) {
+        Node node = new Node(x, y, type, maze);
+        maze.get(y).set(x, node);
+        return node;
+    }
+
+}
+
