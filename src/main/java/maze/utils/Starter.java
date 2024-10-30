@@ -5,21 +5,25 @@ import maze.solver.Pair;
 import java.io.*;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Starter {
 
     static String end = "";
     public static void main(String[] args) throws IOException {
+        List<Double> aStarTime = new ArrayList<>();
+        List<Double> dfsTime = new ArrayList<>();
         for (int m = 0; m < 1000; m++) {
             generateMap();
             List<List<String>> maze = new ArrayList<>();
             List<Double> expectedTime = new ArrayList<>();
             int expectedAnswer = wrapper(maze, "Q:/algorithms/target/classes", "maze.solver.Main", expectedTime, 2);
 
-
-
+            dfsTime.add(expectedTime.get(0));
+            aStarTime.add(expectedTime.get(1));
 
             if (expectedAnswer == -1) {
                 for (List<String> row : maze) {
@@ -28,6 +32,56 @@ public class Starter {
             }
             System.out.println(expectedAnswer + " " + expectedTime.stream().map(String::valueOf).collect(Collectors.joining(" ")));
         }
+
+        double avarageAStar = mean(aStarTime);
+        double avarageDfs = mean(dfsTime);
+        double medianAStar = median(aStarTime);
+        double medianDfs = median(dfsTime);
+        double modeAStar = mode(aStarTime);
+        double modeDfs = mode(dfsTime);
+
+        double standardDeviationAStar = standardDeviation(aStarTime);
+        double standardDeviationDfs = standardDeviation(dfsTime);
+
+        System.out.println(avarageAStar + " -- " + avarageDfs);
+        System.out.println(medianAStar + " -- " + medianDfs);
+        System.out.println(modeAStar + " -- " + modeDfs);
+        System.out.println(standardDeviationAStar + " -- " + standardDeviationDfs);
+
+    }
+
+    public static double standardDeviation(List<Double> times) {
+        double mean = mean(times);
+        double variance = times.stream()
+                .mapToDouble(time -> Math.pow(time - mean, 2))
+                .average()
+                .orElse(0.0);
+        return Math.sqrt(variance);
+    }
+
+    public static double mean(List<Double> times) {
+        return times.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+    }
+
+    public static long mode(List<Double> times) {
+        Map<Integer, Integer> frequencyMap = new HashMap<>();
+        for (Integer time : times.stream().map(Double::intValue).toList()) {
+            frequencyMap.put(time, frequencyMap.getOrDefault(time, 0) + 1);
+        }
+        return frequencyMap.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(Map.Entry::getKey)
+                .orElseThrow();
+    }
+
+    public static double median(List<Double> times) {
+        List<Double> sorted = times.stream().sorted().toList();
+        int middle = sorted.size() / 2;
+        if (sorted.size() % 2 == 0) {
+            return (sorted.get(middle - 1) + sorted.get(middle)) / 2.0;
+        } else {
+            return sorted.get(middle);
+        }
     }
 
     public static int wrapper(List<List<String>> maze, String algPath, String main, List<Double> time, int algCount) throws IOException {
@@ -35,19 +89,16 @@ public class Starter {
 
         int answer = -1;
         String line;
+        ProcessBuilder processBuilder = new ProcessBuilder("java", "-cp", algPath, main);
+        processBuilder.redirectErrorStream(true);
+        Process process = processBuilder.start();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        PrintWriter writer = new PrintWriter(process.getOutputStream(), true); // Автоматическая очистка буфера
         for (int i = 0; i < algCount; i++) {
             while ((line = mapReader.readLine()) != null) {
                 List<String> row = new ArrayList<>(List.of(line.split("")));
                 maze.add(row);
             }
-
-            ProcessBuilder processBuilder = new ProcessBuilder("java", "-cp", algPath, main);
-            processBuilder.redirectErrorStream(true);
-
-            Process process = processBuilder.start();
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            PrintWriter writer = new PrintWriter(process.getOutputStream(), true); // Автоматическая очистка буфера
 
             writer.println("1");
             writer.println(end);
@@ -58,7 +109,6 @@ public class Starter {
                     answer = Integer.parseInt(line1[1]);
                     break;
                 } else if (!line1[0].equals("m")) {
-
                     System.out.println(String.join(" ", line1));
                     System.out.println("Error");
                     break;
@@ -90,6 +140,7 @@ public class Starter {
             }
             time.add(Double.parseDouble(reader.readLine()));
         }
+        process.destroy();
         return answer;
     }
     
