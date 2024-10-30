@@ -16,37 +16,54 @@ public class Starter {
     public static void main(String[] args) throws IOException {
         List<Double> aStarTime = new ArrayList<>();
         List<Double> dfsTime = new ArrayList<>();
-        for (int m = 0; m < 1000; m++) {
+        for (int m = 0; m < 10; m++) {
             generateMap();
             List<List<String>> maze = new ArrayList<>();
             List<Double> expectedTime = new ArrayList<>();
+
+            BufferedReader mapReader = new BufferedReader(new FileReader("Q:\\algorithms\\src\\main\\java\\maze\\utils\\maze.txt"));
+            String line;
+            while ((line = mapReader.readLine()) != null) {
+                List<String> row = new ArrayList<>(List.of(line.split("")));
+                maze.add(row);
+            }
+
+
             int expectedAnswer = wrapper(maze, "Q:/algorithms/target/classes", "maze.solver.Main", expectedTime, 2);
+            int actualAnswer = wrapper(maze, "Q:/algorithms/target/classes", "maze.solver.Collector2", expectedTime, 1);
 
-            dfsTime.add(expectedTime.get(0));
-            aStarTime.add(expectedTime.get(1));
-
-            if (expectedAnswer == -1) {
+            if (expectedAnswer != actualAnswer) {
                 for (List<String> row : maze) {
                     System.out.println(String.join(" ", row));
                 }
+                System.out.println(expectedAnswer + " " + actualAnswer + " ");
             }
-            System.out.println(expectedAnswer + " " + expectedTime.stream().map(String::valueOf).collect(Collectors.joining(" ")));
+
+//            dfsTime.add(expectedTime.get(0));
+//            aStarTime.add(expectedTime.get(1));
+//
+//            if (expectedAnswer == -1) {
+//                for (List<String> row : maze) {
+//                    System.out.println(String.join(" ", row));
+//                }
+//            }
+//            System.out.println(expectedAnswer + " " + expectedTime.stream().map(String::valueOf).collect(Collectors.joining(" ")));
         }
 
-        double avarageAStar = mean(aStarTime);
-        double avarageDfs = mean(dfsTime);
-        double medianAStar = median(aStarTime);
-        double medianDfs = median(dfsTime);
-        double modeAStar = mode(aStarTime);
-        double modeDfs = mode(dfsTime);
-
-        double standardDeviationAStar = standardDeviation(aStarTime);
-        double standardDeviationDfs = standardDeviation(dfsTime);
-
-        System.out.println(avarageAStar + " -- " + avarageDfs);
-        System.out.println(medianAStar + " -- " + medianDfs);
-        System.out.println(modeAStar + " -- " + modeDfs);
-        System.out.println(standardDeviationAStar + " -- " + standardDeviationDfs);
+//        double avarageAStar = mean(aStarTime);
+//        double avarageDfs = mean(dfsTime);
+//        double medianAStar = median(aStarTime);
+//        double medianDfs = median(dfsTime);
+//        double modeAStar = mode(aStarTime);
+//        double modeDfs = mode(dfsTime);
+//
+//        double standardDeviationAStar = standardDeviation(aStarTime);
+//        double standardDeviationDfs = standardDeviation(dfsTime);
+//
+//        System.out.println(avarageAStar + " -- " + avarageDfs);
+//        System.out.println(medianAStar + " -- " + medianDfs);
+//        System.out.println(modeAStar + " -- " + modeDfs);
+//        System.out.println(standardDeviationAStar + " -- " + standardDeviationDfs);
 
     }
 
@@ -85,20 +102,14 @@ public class Starter {
     }
 
     public static int wrapper(List<List<String>> maze, String algPath, String main, List<Double> time, int algCount) throws IOException {
-        BufferedReader mapReader = new BufferedReader(new FileReader("Q:\\algorithms\\src\\main\\java\\maze\\utils\\maze.txt"));
 
         int answer = -1;
-        String line;
         ProcessBuilder processBuilder = new ProcessBuilder("java", "-cp", algPath, main);
         processBuilder.redirectErrorStream(true);
         Process process = processBuilder.start();
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         PrintWriter writer = new PrintWriter(process.getOutputStream(), true); // Автоматическая очистка буфера
         for (int i = 0; i < algCount; i++) {
-            while ((line = mapReader.readLine()) != null) {
-                List<String> row = new ArrayList<>(List.of(line.split("")));
-                maze.add(row);
-            }
 
             writer.println("1");
             writer.println(end);
@@ -138,7 +149,7 @@ public class Starter {
 //                System.out.println(String.join("\n", neighbors));
                 }
             }
-            time.add(Double.parseDouble(reader.readLine()));
+//            time.add(Double.parseDouble(reader.readLine()));
         }
         process.destroy();
         return answer;

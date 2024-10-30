@@ -9,11 +9,11 @@ public class Main {
         long startTime = System.nanoTime();
         backtrackingAlgorithm.execute();
         long endTime = System.nanoTime();
-        System.out.println(((endTime - startTime) / 1_000_000.0));
+//        System.out.println(((endTime - startTime) / 1_000_000.0));
         AStarAlgorithm aStarAlgorithm = new AStarAlgorithm();
         startTime = System.nanoTime();
         aStarAlgorithm.execute();
         endTime = System.nanoTime();
-        System.out.println(((endTime - startTime) / 1_000_000.0));
+//        System.out.println(((endTime - startTime) / 1_000_000.0));
     }
 }
