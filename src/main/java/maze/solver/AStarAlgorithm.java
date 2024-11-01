@@ -26,7 +26,10 @@ public class AStarAlgorithm {
                 .setDistance(Integer.MAX_VALUE / 2, Integer.MAX_VALUE / 2);
 
         queue.add(new PointModified(neo.getX(), neo.getY()).setDistance(directPath(neo.getCoordinates(), end.getCoordinates()), 0));
-
+        if (endPoint.coordinates.equals(Pair.of(0,0))){
+            System.out.println("e 0");
+            return;
+        }
         while (!queue.isEmpty()) {
             PointModified current = queue.poll();
             if (prevPosition != null && !current.prev.equals(prevPosition)) {

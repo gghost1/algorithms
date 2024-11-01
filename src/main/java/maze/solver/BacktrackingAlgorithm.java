@@ -9,7 +9,11 @@ public class BacktrackingAlgorithm {
     Scanner scanner;
     int best = Integer.MAX_VALUE;
     List<Pair> visited = new ArrayList<>();
+    List<Pair> winPath = new ArrayList<>();
 
+    /**
+     * Initialization
+     */
     public BacktrackingAlgorithm() {
         maze = new Maze(9, 9);
         scanner = new Scanner(System.in);
@@ -20,6 +24,7 @@ public class BacktrackingAlgorithm {
 
     public void execute() {
         searchTreeBacktracking(new PointModified(neo.getCoordinates()).setDistance(directPath(neo.getCoordinates(), end.getCoordinates()), 0));
+        // check the best solution or -1
         if (best != Integer.MAX_VALUE) {
             System.out.println("e " + best);
         } else {
@@ -28,42 +33,74 @@ public class BacktrackingAlgorithm {
     }
 
     private boolean searchTreeBacktracking(PointModified current) {
+        // check if the end is reached
         if (current.coordinates.equals(end.getCoordinates())) {
             if (current.passedDistance < best) {
-                best = current.weight;
+                best = current.weight; // best score updated
+                winPath = new ArrayList<>();
+                winPath.add(current.coordinates);
+                PointModified next = current;
+                while (next.prev != null) {
+                    winPath.add(next.prev.coordinates);
+                    next = next.prev;
+                }
             }
             return true;
         }
 
-        step(current.coordinates);
+        step(current.coordinates); // the function to output move and input maze information
         Node neoInner = neo;
 
         int counter = 0;
+        boolean causeVisited = false;
+        List<PointModified> nextList = new ArrayList<>();
+        // check all directions and creates next possible points
         for (Pair direction: Pair.directions()) {
             Pair to = Pair.of(current.coordinates.x + direction.x, current.coordinates.y + direction.y);
+            // check if the destination is in bounds
             if (!isValidDestination(to, maze.width, maze.height)) {
+                causeVisited = true;
                 continue;
             }
+            // check if the destination is not already visited
             if (visited.contains(to) || isVisited(current, to)) {
                 continue;
             }
+            // check if the destination is not dangerous
             if (neoInner.isDanger(direction)) {
+                causeVisited = true;
                 continue;
             }
-            if (current.passedDistance + 1 > maze.height* maze.width) {
-                continue;
-            }
-            counter++;
-            searchTreeBacktracking(
-                current.createNext(to)
-                        .setDistance(
-                                directPath(to, end.getCoordinates()),
-                                current.passedDistance + 1)
-            );
-            step(current.coordinates);
+            counter++; // to determine the dead end
+            nextList.add(current.createNext(to)
+                    .setDistance(
+                            directPath(to, end.getCoordinates()),
+                            current.passedDistance + 1));
         }
-        if (counter == 0) {
-            visited.add(current.coordinates);
+        nextList.sort((a, b) -> {
+            if (a.directDistance == b.directDistance) {
+                return b.passedDistance - a.passedDistance;
+            } else {
+                return a.directDistance - b.directDistance;
+            }
+        }); // sort destinations by direct distance
+        for (PointModified next: nextList) {
+            if (best != Integer.MAX_VALUE) {
+                // check if the weight is less than the best
+                if (next.weight < best) {
+                    searchTreeBacktracking(next);
+                    step(current.coordinates);
+                }
+            } else {
+                searchTreeBacktracking(next);
+                step(current.coordinates);
+            }
+        }
+        // if the dead end
+        if (counter == 0 && !causeVisited) {
+            if (!winPath.contains(current.coordinates)) {
+                visited.add(current.coordinates);
+            }
         }
         return false;
     }
@@ -133,13 +170,13 @@ public class BacktrackingAlgorithm {
         neo = maze.createNode(coordinates.x, coordinates.y, NodeType.NEO);
     }
 
-    static class PointModified {
+    public static class PointModified {
         private final Pair coordinates;
 
         private PointModified prev;
-        private int directDistance;
-        private int passedDistance;
-        private int weight;
+        public int directDistance;
+        public int passedDistance;
+        public int weight;
 
         private PointModified(Pair coordinates) {
             this.coordinates = coordinates;

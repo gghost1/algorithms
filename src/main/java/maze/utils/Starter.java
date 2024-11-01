@@ -4,33 +4,63 @@ import maze.solver.Pair;
 
 import java.io.*;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Starter {
 
     static String end = "";
+
+//    public static void main(String[] args) throws IOException {
+//        end = "7 3";
+//        List<List<String>> maze = new ArrayList<>();
+//        BufferedReader mapReader = new BufferedReader(new FileReader("Q:\\algorithms\\src\\main\\java\\maze\\utils\\maze.txt"));
+//        String line;
+//        while ((line = mapReader.readLine()) != null) {
+//            List<String> row = new ArrayList<>(List.of(line.split("")));
+//            maze.add(row);
+//        }
+//        List<Integer> answers = wrapper(maze, "Q:/algorithms/target/classes", "maze.solver.Main", new ArrayList<>(), 1);
+//        System.out.println(answers.getFirst());
+//    }
+
     public static void main(String[] args) throws IOException {
         List<Double> aStarTime = new ArrayList<>();
         List<Double> dfsTime = new ArrayList<>();
         for (int m = 0; m < 1000; m++) {
+            if (m % 10 == 0) {
+                System.out.println(m);
+            }
             generateMap();
             List<List<String>> maze = new ArrayList<>();
             List<Double> expectedTime = new ArrayList<>();
-            int expectedAnswer = wrapper(maze, "Q:/algorithms/target/classes", "maze.solver.Main", expectedTime, 2);
+            BufferedReader mapReader = new BufferedReader(new FileReader("Q:\\algorithms\\src\\main\\java\\maze\\utils\\maze.txt"));
+            String line;
+            while ((line = mapReader.readLine()) != null) {
+                List<String> row = new ArrayList<>(List.of(line.split("")));
+                maze.add(row);
+            }
+
+            List<Integer> expectedAnswer = wrapper(maze, "Q:/algorithms/target/classes", "maze.solver.Main", expectedTime, 2);
 
             dfsTime.add(expectedTime.get(0));
             aStarTime.add(expectedTime.get(1));
 
-            if (expectedAnswer == -1) {
+//            if (!Objects.equals(expectedAnswer.get(0), expectedAnswer.get(1))) {
+//                System.out.println("!!");
+//                for (List<String> row : maze) {
+//                    System.out.println(String.join(" ", row));
+//                }
+//                System.out.println(expectedAnswer.get(0) + " " + expectedAnswer.get(1));
+//            }
+
+            if (expectedAnswer.getLast() == -1) {
+                System.out.println(-1);
                 for (List<String> row : maze) {
                     System.out.println(String.join(" ", row));
                 }
+                System.out.println(expectedAnswer + " " + expectedTime.get(0) + " " + expectedTime.get(1));
             }
-            System.out.println(expectedAnswer + " " + expectedTime.stream().map(String::valueOf).collect(Collectors.joining(" ")));
         }
 
         double avarageAStar = mean(aStarTime);
@@ -84,21 +114,16 @@ public class Starter {
         }
     }
 
-    public static int wrapper(List<List<String>> maze, String algPath, String main, List<Double> time, int algCount) throws IOException {
-        BufferedReader mapReader = new BufferedReader(new FileReader("Q:\\algorithms\\src\\main\\java\\maze\\utils\\maze.txt"));
+    public static List<Integer> wrapper(List<List<String>> maze, String algPath, String main, List<Double> time, int algCount) throws IOException {
 
-        int answer = -1;
-        String line;
+        List<Integer> answer = new ArrayList<>();
+
         ProcessBuilder processBuilder = new ProcessBuilder("java", "-cp", algPath, main);
         processBuilder.redirectErrorStream(true);
         Process process = processBuilder.start();
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         PrintWriter writer = new PrintWriter(process.getOutputStream(), true); // Автоматическая очистка буфера
         for (int i = 0; i < algCount; i++) {
-            while ((line = mapReader.readLine()) != null) {
-                List<String> row = new ArrayList<>(List.of(line.split("")));
-                maze.add(row);
-            }
 
             writer.println("1");
             writer.println(end);
@@ -106,9 +131,9 @@ public class Starter {
             while (true) {
                 String[] line1 = reader.readLine().split(" ");
                 if (line1[0].equals("e")) {
-                    answer = Integer.parseInt(line1[1]);
+                    answer.add(Integer.parseInt(line1[1]));
                     break;
-                } else if (!line1[0].equals("m")) {
+                }  else if (!line1[0].equals("m")) {
                     System.out.println(String.join(" ", line1));
                     System.out.println("Error");
                     break;
@@ -117,7 +142,7 @@ public class Starter {
                 List<String> neighbors = new ArrayList<>();
                 int x = Integer.parseInt(line1[1]);
                 int y = Integer.parseInt(line1[2]);
-//            System.out.println(x + " " + y);
+//            System.out.println("m " + x + " " + y);
 
                 for (Pair neighborDirection : Pair.directionsVisibility()) {
                     int neighborX = x + neighborDirection.x;

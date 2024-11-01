@@ -1,14 +1,15 @@
-//package org.example;
-//
 //import java.util.*;
 //
-//public class Main_AStar {
+//public class Main {
 //    public static void main(String[] args) {
-//        AStarAlgorithm aStarAlgorithm = new AStarAlgorithm();
-//        aStarAlgorithm.execute();
+//        AStarAlgorithm aStarAlgorithm = new AStarAlgorithm(); // initialize the algorithm
+//        aStarAlgorithm.execute(); // run the algorithm
 //    }
 //}
 //
+///**
+// * The class contains information for the algorithm and execute method
+// */
 //class AStarAlgorithm {
 //    private Maze maze;
 //    Node neo;
@@ -27,31 +28,40 @@
 //        PointModified endPoint = new PointModified(end.getCoordinates());
 //        PointModified prevPosition = null;
 //
+//        // queue for all possible destinations sorted by direct path and weight
 //        Queue<PointModified> queue = new PriorityQueue<>(
 //                Comparator.comparingInt((PointModified o) -> o.weight)
 //                        .thenComparingInt(o -> o.directDistance));
+//        // create point for best end point
 //        PointModified bestEnd = new PointModified(0, 0)
 //                .setDistance(Integer.MAX_VALUE / 2, Integer.MAX_VALUE / 2);
 //
 //        queue.add(new PointModified(neo.getX(), neo.getY()).setDistance(directPath(neo.getCoordinates(), end.getCoordinates()), 0));
 //
+//        // execute while queue is not empty
 //        while (!queue.isEmpty()) {
 //            PointModified current = queue.poll();
+//            // prevent teleportation by coming back to the start and then to the point
 //            if (prevPosition != null && !current.prev.equals(prevPosition)) {
 //                goTo(current, prevPosition);
 //            }
+//            // method to output move and read maze information around
 //            step(Pair.of(current.coordinates.x, current.coordinates.y));
 //
+//            // check all destinations
 //            for (Pair direction: Pair.directions()) {
 //                Pair to = Pair.of(current.coordinates.x + direction.x, current.coordinates.y + direction.y);
 //
+//                // basic checks
 //                if (isValidDestination(to, maze.width, maze.height)
 //                        && !neo.isDanger(direction)
 //                        && (current.prev == null || !isVisited(current, to))) {
+//                    // check if the destination is the goal
 //                    if (to.equals(endPoint.coordinates)) {
 //                        System.out.println("e " + (current.passedDistance + 1));
 //                        return;
 //                    }
+//                    // else add it to the queue
 //                    queue.add(
 //                            current
 //                                    .createNext(to)
@@ -61,11 +71,14 @@
 //                                    ));
 //                }
 //            }
+//            // update previous position to prevent teleportation
 //            prevPosition = current;
 //        }
+//        // if the goal wasn't reached print "e -1"
 //        System.out.println("e -1");
 //    }
 //
+//    //go back to the start by previous point and then go to the destination
 //    private void goTo(PointModified current, PointModified prev) {
 //        PointModified currentPosition = current;
 //        PointModified prevPosition = prev;
@@ -103,6 +116,7 @@
 //        return to.x >= 0 && to.y >= 0 && to.x < width && to.y < height;
 //    }
 //
+//    // calculate the direct path
 //    private int directPath(Pair start, Pair end) {
 //        int counter = 0;
 //        Pair current = start;
@@ -132,6 +146,7 @@
 //        end = maze.createNode(Integer.parseInt(params[0]), Integer.parseInt(params[1]), NodeType.END);
 //    }
 //
+//    // print move and read maze information
 //    private void step(Pair coordinates) {
 //        System.out.println("m " + coordinates.x + " " + coordinates.y);
 //
@@ -150,6 +165,8 @@
 //
 //    }
 //
+//    // specific class for points
+//    // contains coordinates, previous point and others
 //    static class PointModified {
 //        private final Pair coordinates;
 //
@@ -192,6 +209,9 @@
 //    }
 //}
 //
+///**
+// * The class contains all information about the maze
+// */
 //class Maze {
 //    private final List<List<Node>> maze;
 //    public final int width;
@@ -215,6 +235,7 @@
 //        return maze.get(y).get(x);
 //    }
 //
+//    // create entity in the maze
 //    public Node createNode(int x, int y, NodeType type) {
 //        Node node = new Node(x, y, type, maze);
 //        maze.get(y).set(x, node);
@@ -241,6 +262,7 @@
 //        return Pair.of(x, y);
 //    }
 //
+//    // get all neighbors
 //    private HashMap<Pair, Node> getNeighbors(List<List<Node>> maze) {
 //        List<Pair> neighborDirections = Pair.directionsVisibility();
 //        HashMap<Pair, Node> neighborsCreation = new HashMap<>();
@@ -257,7 +279,9 @@
 //    }
 //
 //    public boolean isDanger(Pair coordinates) {
-//        return neighbors.get(coordinates) != null && neighbors.get(coordinates).nodeType != NodeType.END && neighbors.get(coordinates).nodeType != NodeType.KEY;
+//        return neighbors.get(coordinates) != null
+//                && neighbors.get(coordinates).nodeType != NodeType.END
+//                && neighbors.get(coordinates).nodeType != NodeType.KEY; // ignore key because tests don't care about of it
 //    }
 //
 //    public int getX() {
