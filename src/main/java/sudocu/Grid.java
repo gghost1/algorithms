@@ -207,6 +207,21 @@ public class Grid {
         return column;
     }
 
+    public static Grid initFill(List<List<Integer>> initGrid) {
+        Grid grid = new Grid(initGrid, new HashSet<>());
+        for (int i = 0; i < grid.grid.size(); i++) {
+            for (int j = 0; j < grid.grid.getFirst().size(); j++) {
+                if (grid.grid.get(i).get(j) == -1) {
+                    List<Integer> possible = grid.getPossibleNumbers(j, i);
+                    if (possible.size() == 1) {
+                        grid.add(j, i, possible.getFirst());
+                    }
+                }
+            }
+        }
+        return grid;
+    }
+
     public static HashSet<Pair> checkInit(List<List<Integer>> initGrid) {
         HashSet<Pair> initCoordinates = new HashSet<>();
         for (int i = 0; i < initGrid.size(); i++) {

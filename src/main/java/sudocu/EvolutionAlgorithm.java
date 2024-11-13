@@ -23,6 +23,7 @@ public class EvolutionAlgorithm {
     public static HashSet<Pair> initCoordinates;
 
     public static void main(String[] args) {
+        init = Grid.initFill(init).grid;
         initCoordinates = Grid.checkInit(init);
 /*
 init 100 random
@@ -47,22 +48,31 @@ then in each iteration:
     }
 
     private static void solve() {
-        List<Grid> grids = new ArrayList<>();
-        for (int i = 0; i < 200; i++) {
-            Grid grid = new Grid(init, initCoordinates);
-            if (grid.fill()) {
-                grid.print();
-                System.out.println("Solved in first generation");
-                return;
-            } else {
-                grids.add(grid);
-            }
-        }
-        int best = Integer.MAX_VALUE;
-        int count = 0;
         while (true) {
-            grids.sort(Comparator.comparingInt(Grid::getErrors));
-            grids = grids.stream().limit(60).collect(Collectors.toList());
+            List<Grid> grids = new ArrayList<>();
+            for (int i = 0; i < 200; i++) {
+                Grid grid = new Grid(init, initCoordinates);
+                if (grid.fill()) {
+                    grid.print();
+                    System.out.println("Solved in first generation");
+                    return;
+                } else {
+                    grids.add(grid);
+                }
+            }
+            int best = Integer.MAX_VALUE;
+            int count = 0;
+            while (true) {
+                grids.sort(Comparator.comparingInt(Grid::getErrors));
+                grids = grids.stream().limit(60).collect(Collectors.toList());
+                count++;
+                if (best > grids.getFirst().getErrors()) {
+                    best = grids.getFirst().getErrors();
+                    count = 0;
+                }
+                if (count > 5) {
+                    break;
+                }
                 try {
                     List<Grid> newGrids = Grid.fillCross(grids.stream().limit(40).toList());
                     grids = grids.stream().limit(20).collect(Collectors.toList());
@@ -74,23 +84,25 @@ then in each iteration:
                     return;
                 }
 
-            for (int i = 0; i < grids.size(); i++) {
-                try {
-                    grids.addAll(grids.get(i).fillErrors());
-                } catch (SolvedException e) {
-                    e.grid.print();
-                    System.out.println("Solved in error fixing generation");
-                    return;
+                for (int i = 0; i < grids.size(); i++) {
+                    if (i > 60) break;
+                    try {
+                        grids.addAll(grids.get(i).fillErrors());
+                    } catch (SolvedException e) {
+                        e.grid.print();
+                        System.out.println("Solved in error fixing generation");
+                        return;
+                    }
                 }
-            }
-            for (int i = 0; i < 20; i++) {
-                Grid grid = new Grid(init, initCoordinates);
-                if (grid.fill()) {
-                    grid.print();
-                    System.out.println("Solved in children generation");
-                    return;
-                } else {
-                    grids.add(grid);
+                for (int i = 0; i < 20; i++) {
+                    Grid grid = new Grid(init, initCoordinates);
+                    if (grid.fill()) {
+                        grid.print();
+                        System.out.println("Solved in children generation");
+                        return;
+                    } else {
+                        grids.add(grid);
+                    }
                 }
             }
         }
