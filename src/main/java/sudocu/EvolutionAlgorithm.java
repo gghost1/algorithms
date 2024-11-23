@@ -19,27 +19,16 @@ then in each iteration:
   - other random cross with 5 best
     change -1 between 2 grids
 */
-        long avar = 0;
-        for (int i = 0; i < 40; i++) {
-            input();
-            init = Grid.initFill(init).grid;
-            initCoordinates = Grid.checkInit(init);
-            long startTime = System.nanoTime();
-            solve();
-            long endTime = System.nanoTime();
-            avar += ((endTime - startTime) / 1_000_000.0);
-            init = new ArrayList<>();
-            initCoordinates = new HashSet<>();
-            System.out.println(avar/(i+1));
-        }
-        System.out.println(avar / 40);
 
+            input();
+            initCoordinates = Grid.checkInit(init);
+            solve();
 
     }
 
     private static void input() {
         init = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader("input.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             for (int i = 0; i < 9; i++) {
                 String line = reader.readLine().replaceAll("-", "-1");
                 init.add(new ArrayList<>(Arrays.stream(line.split(" ")).map(Integer::parseInt).collect(Collectors.toList())));
@@ -215,8 +204,10 @@ class Grid {
         List<Grid> newGrids = new ArrayList<>();
         while (pair != null) {
 
+
             Grid newGrid = new Grid(this);
             if (newGrid.fill(pair.x, pair.y)) {
+                new Grid(this).fill(pair.x, pair.y);
                 throw new SolvedException(newGrid);
             }
 
@@ -303,7 +294,7 @@ class Grid {
         int xRight = xLeft + 2;
 
         for (int i = yUp; i <= yDown; i++) {
-            for (int j = xLeft; j < xRight; j++) {
+            for (int j = xLeft; j <= xRight; j++) {
                 square.add(grid.get(i).get(j));
             }
         }
@@ -316,7 +307,7 @@ class Grid {
         int xLeft = x - x % 3;
         int xRight = xLeft + 2;
         for (int i = yUp; i <= yDown; i++) {
-            for (int j = xLeft; j < xRight; j++) {
+            for (int j = xLeft; j <= xRight; j++) {
                 if (!init.contains(Pair.of(j, i))) {
                     grid.get(i).set(j, number);
                 }
@@ -334,21 +325,6 @@ class Grid {
         return column;
     }
 
-    public static Grid initFill(List<List<Integer>> initGrid) {
-        Grid grid = new Grid(initGrid, new HashSet<>());
-        for (int i = 0; i < grid.grid.size(); i++) {
-            for (int j = 0; j < grid.grid.getFirst().size(); j++) {
-                if (grid.grid.get(i).get(j) == -1) {
-                    List<Integer> possible = grid.getPossibleNumbers(j, i);
-                    if (possible.size() == 1) {
-                        grid.add(j, i, possible.getFirst());
-                    }
-                }
-            }
-        }
-        return grid;
-    }
-
     public static HashSet<Pair> checkInit(List<List<Integer>> initGrid) {
         HashSet<Pair> initCoordinates = new HashSet<>();
         for (int i = 0; i < initGrid.size(); i++) {
@@ -362,19 +338,22 @@ class Grid {
     }
 
     public void print() {
-        try (PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(System.out))) {
+//        try (PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(System.out))) {
             for (int i = 0; i < grid.size(); i++) {
                 for (int j = 0; j < grid.getFirst().size(); j++) {
-                    printWriter.print(grid.get(i).get(j));
+                    System.out.print(grid.get(i).get(j));
+//                    printWriter.print(grid.get(i).get(j));
                     if (j != grid.getFirst().size() - 1) {
-                        printWriter.print(" ");
+                        System.out.print(" ");
+//                        printWriter.print(" ");
                     } else {
-                        printWriter.print("\n");
+                        System.out.println();
+//                        printWriter.print("\n");
                     }
                 }
             }
-            printWriter.flush();
-        }
+//            printWriter.flush();
+//        }
     }
 }
 
